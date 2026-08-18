@@ -145,7 +145,7 @@ INSERT INTO car_images (car_id, image_url, is_primary, display_order) VALUES
 -- 5. CAR WASH SERVICES SEED DATA
 INSERT INTO wash_services (id, name, description, price, duration_minutes, image_url, category, is_active) VALUES
 (
-  's1111111-1111-1111-1111-111111111111',
+  'd1111111-1111-1111-1111-111111111111',
   'Express Touchless Wash',
   'Fast eco-friendly exterior foam wash, high-pressure rinse, tire shine, and spot-free air drying.',
   35.00,
@@ -155,7 +155,7 @@ INSERT INTO wash_services (id, name, description, price, duration_minutes, image
   true
 ),
 (
-  's2222222-2222-2222-2222-222222222222',
+  'd2222222-2222-2222-2222-222222222222',
   'Anti Gravity Signature Wash & Polish',
   'Hand snow foam bath, wheel & brake dust removal, clay bar paint decontamination, interior vacuuming, micro-fiber hand dry, and synthetic wax sealant.',
   85.00,
@@ -165,7 +165,7 @@ INSERT INTO wash_services (id, name, description, price, duration_minutes, image
   true
 ),
 (
-  's3333333-3333-3333-3333-333333333333',
+  'd3333333-3333-3333-3333-333333333333',
   'Deep Interior Spa Detailing',
   'Deep steam extraction for seats & carpet, leather conditioning, dashboard UV protection, door jamb cleaning, air vent sanitation, and odor elimination.',
   140.00,
@@ -175,7 +175,7 @@ INSERT INTO wash_services (id, name, description, price, duration_minutes, image
   true
 ),
 (
-  's4444444-4444-4444-4444-444444444444',
+  'd4444444-4444-4444-4444-444444444444',
   '9H Nano Ceramic Coating Package',
   'Multi-stage paint correction to remove swirl marks & scratches, followed by professional 9H hydrophobic ceramic coating application for 3-year paint protection.',
   499.00,
@@ -185,7 +185,7 @@ INSERT INTO wash_services (id, name, description, price, duration_minutes, image
   true
 ),
 (
-  's5555555-5555-5555-5555-555555555555',
+  'd5555555-5555-5555-5555-555555555555',
   'Engine Bay Detailing & Dressing',
   'Safe steam wash of engine bay compartment, degreasing, hydrophobic sealant, and plastic element restoration.',
   65.00,
@@ -248,7 +248,7 @@ INSERT INTO booking_items (booking_id, item_type, service_id, vehicle_type, vehi
 VALUES (
   'b2222222-2222-2222-2222-222222222222',
   'Wash',
-  's2222222-2222-2222-2222-222222222222',
+  'd2222222-2222-2222-2222-222222222222',
   'SUV',
   'NY-SPH-88',
   '2026-08-18',

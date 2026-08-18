@@ -134,32 +134,32 @@ export const AdminCars: React.FC = () => {
   };
 
   return (
-    <div className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div className="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 bg-slate-50 text-slate-800">
       
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="text-xs text-ag-cyan font-bold uppercase tracking-widest block">Inventory Management</span>
-          <h1 className="font-heading text-3xl font-black text-white">CAR RENTAL FLEET</h1>
+          <span className="text-xs text-red-600 font-bold uppercase tracking-widest block">Inventory Management</span>
+          <h1 className="font-heading text-3xl sm:text-4xl font-black text-slate-900 uppercase tracking-tight">CAR RENTAL FLEET</h1>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="px-5 py-3 rounded-2xl bg-gradient-to-r from-ag-cyan to-blue-500 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-md cyan-glow hover:scale-105 transition-all"
+          className="px-5 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-red-600/20 hover:scale-105 transition-all uppercase tracking-wider"
         >
           <Plus className="w-4 h-4" />
           Add New Vehicle
         </button>
       </div>
 
-      {/* TABLE */}
+      {/* TABLE (HIGH-VISIBILITY BLACK ON WHITE) */}
       {loading ? (
-        <div className="h-64 rounded-3xl bg-ag-surface/50 animate-pulse" />
+        <div className="h-64 rounded-3xl bg-slate-200/60 animate-pulse" />
       ) : (
-        <div className="glass-panel rounded-3xl overflow-hidden border border-ag-border/80">
+        <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-xl shadow-slate-200/50">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-ag-surface/80 text-white font-bold uppercase text-[10px] tracking-wider border-b border-ag-border">
+            <table className="w-full text-left text-xs text-slate-800">
+              <thead className="bg-slate-100 text-slate-900 font-black uppercase text-[11px] tracking-wider border-b border-slate-200">
                 <tr>
                   <th className="p-4">Vehicle</th>
                   <th className="p-4">Reg Number</th>
@@ -169,46 +169,52 @@ export const AdminCars: React.FC = () => {
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ag-border/50">
+              <tbody className="divide-y divide-slate-200">
                 {cars.map((car) => (
-                  <tr key={car.id} className="hover:bg-ag-surface/40 transition-colors">
-                    <td className="p-4 font-bold text-white flex items-center gap-3">
+                  <tr key={car.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-4 font-bold text-slate-900 flex items-center gap-3">
                       <img
                         src={car.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=800&q=80'}
                         alt={car.name}
-                        className="w-12 h-9 object-cover rounded-lg bg-ag-surface"
+                        className="w-12 h-9 object-cover rounded-lg bg-slate-100 border border-slate-200"
                       />
                       <div>
-                        <span>{car.brand} {car.name}</span>
-                        <span className="block text-[10px] text-slate-400 font-normal">{car.year} | {car.transmission}</span>
+                        <span className="text-slate-900 font-bold block">{car.brand} {car.name}</span>
+                        <span className="block text-[10px] text-slate-500 font-medium">{car.year} | {car.transmission}</span>
                       </div>
                     </td>
-                    <td className="p-4 font-mono text-ag-cyan">{car.registration_number}</td>
-                    <td className="p-4">{car.fuel_type}</td>
-                    <td className="p-4 font-bold text-white">${car.price_per_day}/day</td>
+                    <td className="p-4 font-mono font-bold text-red-600">{car.registration_number}</td>
+                    <td className="p-4 font-medium text-slate-700">{car.fuel_type}</td>
+                    <td className="p-4 font-black text-slate-900">${car.price_per_day}/day</td>
                     <td className="p-4">
                       <select
                         value={car.status}
                         onChange={(e) => handleStatusChange(car.id, e.target.value as CarStatus)}
-                        className="bg-ag-surface border border-ag-border rounded-lg px-2.5 py-1 text-[11px] font-bold text-white focus:outline-none"
+                        className={`border rounded-xl px-2.5 py-1 text-[11px] font-bold focus:outline-none cursor-pointer ${
+                          car.status === 'Available'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                            : car.status === 'Booked'
+                            ? 'bg-blue-50 text-blue-700 border-blue-300'
+                            : 'bg-amber-50 text-amber-700 border-amber-300'
+                        }`}
                       >
-                        <option value="Available">Available</option>
-                        <option value="Booked">Booked</option>
-                        <option value="Maintenance">Maintenance</option>
-                        <option value="Temporarily Unavailable">Unavailable</option>
+                        <option value="Available" className="bg-white text-slate-900">Available</option>
+                        <option value="Booked" className="bg-white text-slate-900">Booked</option>
+                        <option value="Maintenance" className="bg-white text-slate-900">Maintenance</option>
+                        <option value="Temporarily Unavailable" className="bg-white text-slate-900">Unavailable</option>
                       </select>
                     </td>
                     <td className="p-4 text-right space-x-2">
                       <button
                         onClick={() => handleOpenEdit(car)}
-                        className="p-2 rounded-lg bg-ag-surface hover:bg-ag-border text-slate-300 hover:text-white"
-                        title="Edit Car"
+                        className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-all border border-slate-200"
+                        title="Edit Car Details & Image"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(car.id)}
-                        className="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400"
+                        className="p-2 rounded-xl bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 transition-all border border-rose-200"
                         title="Delete Car"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -224,13 +230,13 @@ export const AdminCars: React.FC = () => {
 
       {/* ADD/EDIT MODAL */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass-panel max-w-2xl w-full p-8 rounded-3xl space-y-6 max-h-[90vh] overflow-y-auto border border-ag-cyan/40">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading text-xl font-bold text-white">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white max-w-2xl w-full p-8 rounded-3xl space-y-6 max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl text-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+              <h3 className="font-heading text-xl font-black text-slate-900 uppercase">
                 {editingCar ? 'Edit Vehicle Entry' : 'Add New Vehicle to Inventory'}
               </h3>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setShowModal(false)} className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -238,144 +244,144 @@ export const AdminCars: React.FC = () => {
             <form onSubmit={handleSave} className="space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-slate-300 font-semibold block mb-1">Car Name *</label>
+                  <label className="text-slate-700 font-bold block mb-1">Car Name *</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="911 Carrera S"
                     required
-                    className="w-full bg-ag-surface border border-ag-border rounded-xl p-3 text-white"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium focus:outline-none focus:border-red-600 focus:bg-white"
                   />
                 </div>
                 <div>
-                  <label className="text-slate-300 font-semibold block mb-1">Brand *</label>
+                  <label className="text-slate-700 font-bold block mb-1">Brand *</label>
                   <input
                     type="text"
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
                     placeholder="Porsche"
                     required
-                    className="w-full bg-ag-surface border border-ag-border rounded-xl p-3 text-white"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium focus:outline-none focus:border-red-600 focus:bg-white"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-slate-300 font-semibold block mb-1">Model</label>
+                  <label className="text-slate-700 font-bold block mb-1">Model</label>
                   <input
                     type="text"
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
                     placeholder="Carrera S"
-                    className="w-full bg-ag-surface border border-ag-border rounded-xl p-3 text-white"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium focus:outline-none focus:border-red-600 focus:bg-white"
                   />
                 </div>
                 <div>
-                  <label className="text-slate-300 font-semibold block mb-1">Year</label>
+                  <label className="text-slate-700 font-bold block mb-1">Year</label>
                   <input
                     type="number"
                     value={year}
                     onChange={(e) => setYear(Number(e.target.value))}
-                    className="w-full bg-ag-surface border border-ag-border rounded-xl p-3 text-white"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium focus:outline-none focus:border-red-600 focus:bg-white"
                   />
                 </div>
                 <div>
-                  <label className="text-slate-300 font-semibold block mb-1">Registration # *</label>
+                  <label className="text-slate-700 font-bold block mb-1">Registration # *</label>
                   <input
                     type="text"
                     value={regNum}
                     onChange={(e) => setRegNum(e.target.value)}
                     placeholder="AG-P911-24"
                     required
-                    className="w-full bg-ag-surface border border-ag-border rounded-xl p-3 text-white"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium focus:outline-none focus:border-red-600 focus:bg-white"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-slate-300 font-semibold block mb-1">Fuel Type</label>
+                  <label className="text-slate-700 font-bold block mb-1">Fuel Type</label>
                   <select
                     value={fuelType}
                     onChange={(e) => setFuelType(e.target.value as FuelType)}
-                    className="w-full bg-ag-surface border border-ag-border rounded-xl p-3 text-white"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium focus:outline-none focus:border-red-600 focus:bg-white"
                   >
-                    <option value="Petrol">Petrol</option>
-                    <option value="Electric">Electric</option>
-                    <option value="Hybrid">Hybrid</option>
-                    <option value="Diesel">Diesel</option>
+                    <option value="Petrol" className="bg-white text-slate-900">Petrol</option>
+                    <option value="Electric" className="bg-white text-slate-900">Electric</option>
+                    <option value="Hybrid" className="bg-white text-slate-900">Hybrid</option>
+                    <option value="Diesel" className="bg-white text-slate-900">Diesel</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-slate-300 font-semibold block mb-1">Transmission</label>
+                  <label className="text-slate-700 font-bold block mb-1">Transmission</label>
                   <select
                     value={transmission}
                     onChange={(e) => setTransmission(e.target.value as TransmissionType)}
-                    className="w-full bg-ag-surface border border-ag-border rounded-xl p-3 text-white"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium focus:outline-none focus:border-red-600 focus:bg-white"
                   >
-                    <option value="Automatic">Automatic</option>
-                    <option value="Manual">Manual</option>
+                    <option value="Automatic" className="bg-white text-slate-900">Automatic</option>
+                    <option value="Manual" className="bg-white text-slate-900">Manual</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-slate-300 font-semibold block mb-1">Price / Day ($) *</label>
+                  <label className="text-slate-700 font-bold block mb-1">Price / Day ($) *</label>
                   <input
                     type="number"
                     value={priceDay}
                     onChange={(e) => setPriceDay(Number(e.target.value))}
                     required
-                    className="w-full bg-ag-surface border border-ag-border rounded-xl p-3 text-white"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium focus:outline-none focus:border-red-600 focus:bg-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold block mb-1">Image URL</label>
+                <label className="text-slate-700 font-bold block mb-1">Image URL</label>
                 <input
                   type="url"
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
                   placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full bg-ag-surface border border-ag-border rounded-xl p-3 text-white"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium focus:outline-none focus:border-red-600 focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold block mb-1">Description</label>
+                <label className="text-slate-700 font-bold block mb-1">Description</label>
                 <textarea
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-ag-surface border border-ag-border rounded-xl p-3 text-white"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium focus:outline-none focus:border-red-600 focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold block mb-1">Features (comma separated)</label>
+                <label className="text-slate-700 font-bold block mb-1">Features (comma separated)</label>
                 <input
                   type="text"
                   value={features}
                   onChange={(e) => setFeatures(e.target.value)}
                   placeholder="Sport Chrono, Bose Audio, Leather Seats"
-                  className="w-full bg-ag-surface border border-ag-border rounded-xl p-3 text-white"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium focus:outline-none focus:border-red-600 focus:bg-white"
                 />
               </div>
 
-              <div className="pt-4 flex justify-end gap-3">
+              <div className="pt-4 flex justify-end gap-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-5 py-2.5 rounded-xl bg-ag-surface text-slate-300"
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-800 font-bold hover:bg-slate-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-ag-cyan text-slate-950 font-bold"
+                  className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-wider shadow-md shadow-red-600/20"
                 >
                   Save Car Entry
                 </button>

@@ -1,37 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CarCard } from '../../components/CarCard';
-import { ServiceCard } from '../../components/ServiceCard';
+import { InteractiveCarShowcase } from '../../components/InteractiveCarShowcase';
 import { api } from '../../services/api';
-import { Car, WashService } from '../../types';
+import { Car } from '../../types';
 import {
   Car as CarIcon,
   Sparkles,
   ShieldCheck,
   Zap,
   ArrowRight,
-  CheckCircle2,
-  Clock,
   Award,
-  Calendar,
   Layers,
-  PhoneCall
+  ChevronRight,
+  Flame,
+  Droplets
 } from 'lucide-react';
 
 export const Home: React.FC = () => {
   const [featuredCars, setFeaturedCars] = useState<Car[]>([]);
-  const [washServices, setWashServices] = useState<WashService[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedFilter, setSelectedFilter] = useState<string>('All');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [carsData, servicesData] = await Promise.all([
-          api.getCars(),
-          api.getWashServices()
-        ]);
+        const carsData = await api.getCars();
         setFeaturedCars(carsData.slice(0, 3));
-        setWashServices(servicesData.slice(0, 3));
       } catch (err) {
         console.error('Failed to load home page data:', err);
       } finally {
@@ -41,187 +36,255 @@ export const Home: React.FC = () => {
     fetchData();
   }, []);
 
+  const filteredCars = selectedFilter === 'All'
+    ? featuredCars
+    : featuredCars.filter(c => c.fuel_type.toLowerCase() === selectedFilter.toLowerCase() || c.brand.toLowerCase().includes(selectedFilter.toLowerCase()));
+
   return (
-    <div className="space-y-24 pb-20">
+    <div className="bg-slate-50 text-slate-900 font-sans selection:bg-red-600 selection:text-white pb-20 space-y-24 sm:space-y-32 overflow-x-hidden">
       
       {/* ==================================================================== */}
-      {/* 1. HERO SECTION */}
+      {/* 1. CINEMATIC HERO SECTION */}
       {/* ==================================================================== */}
-      <section className="relative min-h-[90vh] flex items-center justify-center pt-24 pb-16 overflow-hidden">
-        {/* Background Automotive Image */}
-        <div className="absolute inset-0 bg-ag-dark">
-          <img
-            src="https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=2000&q=80"
-            alt="Anti Gravity Hero Car"
-            className="w-full h-full object-cover opacity-35 filter brightness-90 saturate-125"
+      <section className="relative min-h-[92vh] flex items-center pt-28 pb-16 overflow-hidden">
+        {/* Background Editorial Glow & Architecture Grid */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] bg-gradient-to-tr from-red-500/10 via-slate-200/40 to-transparent rounded-full blur-[140px]" />
+          <div
+            className="absolute inset-0 opacity-25"
+            style={{
+              backgroundImage: `radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.08) 1px, transparent 1px)`,
+              backgroundSize: '40px 40px'
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-ag-dark via-ag-dark/80 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-ag-dark/95 via-transparent to-ag-dark/95" />
         </div>
 
-        {/* Hero Content Box */}
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 z-10">
-          
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-ag-card/80 border border-ag-cyan/40 backdrop-blur-md text-ag-cyan text-xs font-bold uppercase tracking-widest cyan-glow">
-            <Sparkles className="w-4 h-4" />
-            Premium Car Rental & Detailing Platform
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            
+            {/* HERO TYPOGRAPHY & COPY (LEFT 6 COLS) */}
+            <div className="lg:col-span-6 space-y-6 sm:space-y-8 text-left">
+              
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-200 text-red-600 text-xs font-mono uppercase tracking-widest shadow-sm">
+                <Flame className="w-3.5 h-3.5 text-red-600" />
+                THE PREMIER AUTOMOTIVE BRAND
+              </div>
+
+              <h1 className="font-heading text-5xl sm:text-7xl lg:text-8xl font-black text-slate-950 tracking-tighter uppercase leading-[0.95]">
+                SMOOTH.{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-orange-500 to-amber-600 block">
+                  POWERFUL.
+                </span>
+                YOURS.
+              </h1>
+
+              <p className="text-slate-600 text-base sm:text-lg max-w-lg leading-relaxed font-normal">
+                Welcome to <strong className="text-slate-950 font-bold">Anti Gravity</strong> — where luxury detailing meets high-performance car rentals. Experience touchless foam detailing or take the wheel of an exotic supercar.
+              </p>
+
+              {/* ACTION BUTTONS */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
+                <Link
+                  to="/booking?type=wash"
+                  className="px-8 py-4 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-sm uppercase tracking-wider shadow-xl shadow-red-600/20 hover:scale-105 transition-all flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Book a Wash
+                </Link>
+
+                <Link
+                  to="/booking?type=rental"
+                  className="px-8 py-4 rounded-2xl bg-slate-950 hover:bg-slate-800 text-white font-black text-sm uppercase tracking-wider hover:scale-105 transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-950/20"
+                >
+                  <CarIcon className="w-4 h-4 text-red-500" />
+                  Rent a Car
+                </Link>
+
+                <Link
+                  to="/cars"
+                  className="px-6 py-4 text-slate-600 hover:text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  Explore Fleet
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              {/* HERO STATS BAR */}
+              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-200 max-w-md">
+                <div>
+                  <span className="font-heading text-2xl font-black text-slate-950 block">100%</span>
+                  <span className="text-[11px] text-slate-500 font-mono uppercase font-semibold">Inspected Fleet</span>
+                </div>
+                <div>
+                  <span className="font-heading text-2xl font-black text-red-600 block">24/7</span>
+                  <span className="text-[11px] text-slate-500 font-mono uppercase font-semibold">Concierge</span>
+                </div>
+                <div>
+                  <span className="font-heading text-2xl font-black text-sky-600 block">4.9 ★</span>
+                  <span className="text-[11px] text-slate-500 font-mono uppercase font-semibold">Rating</span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* HUGE HERO VEHICLE VISUAL (RIGHT 6 COLS — OCCUPIES 55-65% VISUAL AREA) */}
+            <div className="lg:col-span-6 relative w-full flex items-center justify-center">
+              
+              {/* Soft Ambient Background Geometry */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-red-500/10 via-slate-100 to-transparent rounded-[3rem] blur-2xl transform rotate-3 scale-95" />
+
+              {/* Main Container */}
+              <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] max-h-[500px] rounded-[2.5rem] bg-white border border-slate-200/90 shadow-2xl shadow-slate-200/80 p-6 sm:p-10 flex flex-col justify-between overflow-hidden">
+                
+                {/* Floor Shadow */}
+                <div className="absolute bottom-6 left-[10%] right-[10%] h-12 rounded-[100%] bg-slate-900/25 blur-md pointer-events-none" />
+
+                {/* Floor Reflection */}
+                <div
+                  className="absolute bottom-0 left-4 right-4 h-28 pointer-events-none opacity-20 blur-[3px] overflow-hidden"
+                  style={{ transform: 'scaleY(-1) translateY(-85%)' }}
+                >
+                  <img
+                    src="/car_rental_3d.jpg"
+                    alt=""
+                    aria-hidden="true"
+                    className="w-full h-full object-contain filter brightness-95"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent" />
+                </div>
+
+                {/* Hero Vehicle Image */}
+                <div className="relative z-10 w-full h-full flex items-center justify-center">
+                  <img
+                    src="/car_rental_3d.jpg"
+                    alt="Anti Gravity Hero Vehicle"
+                    className="w-full max-h-[380px] object-contain filter drop-shadow-[0_25px_35px_rgba(15,23,42,0.2)] transform hover:scale-105 transition-transform duration-700"
+                  />
+                </div>
+
+                {/* Subtle Overlay Label */}
+                <div className="relative z-20 flex items-center justify-between text-[11px] font-mono text-slate-500 pt-2 border-t border-slate-200/80 font-semibold">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+                    ANTI GRAVITY ARISE GT
+                  </span>
+                  <span>SERIES 2026</span>
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
-
-          <h1 className="font-heading text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight max-w-4xl mx-auto leading-none">
-            DRIVE BETTER. TRAVEL FURTHER.{' '}
-            <span className="text-gradient-cyan block mt-2">STAY SPOTLESS.</span>
-          </h1>
-
-          <p className="max-w-2xl mx-auto text-slate-300 text-base sm:text-lg leading-relaxed font-normal">
-            Welcome to <strong className="text-white">Anti Gravity</strong> — the premier automotive experience. 
-            Rent luxury sports cars & SUVs, or pamper your vehicle with high-pressure snow foam washing, interior steam detailing, and 9H ceramic coating.
-          </p>
-
-          {/* THREE HERO ACTION BUTTONS */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link
-              to="/booking?type=rental"
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-ag-cyan to-blue-500 text-slate-950 font-black text-base shadow-lg cyan-glow hover:scale-105 transition-all flex items-center justify-center gap-2"
-            >
-              <CarIcon className="w-5 h-5 stroke-[2.5]" />
-              Book a Car
-            </Link>
-
-            <Link
-              to="/booking?type=wash"
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-ag-gold to-amber-500 text-slate-950 font-black text-base shadow-lg gold-glow hover:scale-105 transition-all flex items-center justify-center gap-2"
-            >
-              <Sparkles className="w-5 h-5 stroke-[2.5]" />
-              Book a Car Wash
-            </Link>
-
-            <Link
-              to="/cars"
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-ag-surface/80 hover:bg-ag-border border border-ag-border text-white font-bold text-base backdrop-blur-md hover:scale-105 transition-all flex items-center justify-center gap-2"
-            >
-              View Fleet
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-          </div>
-
-          {/* KEY METRICS BAR */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-12 max-w-4xl mx-auto">
-            <div className="glass-panel p-4 rounded-2xl text-center">
-              <span className="font-heading text-3xl font-black text-ag-cyan block">100%</span>
-              <span className="text-xs text-slate-400 font-medium">Inspected Fleet</span>
-            </div>
-            <div className="glass-panel p-4 rounded-2xl text-center">
-              <span className="font-heading text-3xl font-black text-ag-gold block">24/7</span>
-              <span className="text-xs text-slate-400 font-medium">Concierge Support</span>
-            </div>
-            <div className="glass-panel p-4 rounded-2xl text-center">
-              <span className="font-heading text-3xl font-black text-white block">15 Min</span>
-              <span className="text-xs text-slate-400 font-medium">Fast Express Wash</span>
-            </div>
-            <div className="glass-panel p-4 rounded-2xl text-center">
-              <span className="font-heading text-3xl font-black text-ag-cyan block">4.9 ★</span>
-              <span className="text-xs text-slate-400 font-medium">Customer Rating</span>
-            </div>
-          </div>
-
         </div>
       </section>
 
 
       {/* ==================================================================== */}
-      {/* 2. SERVICES OVERVIEW SECTION */}
+      {/* 2. SECTION A — CAR WASH INTERACTIVE SHOWCASE */}
       {/* ==================================================================== */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
-          <span className="text-xs text-ag-cyan font-bold uppercase tracking-widest block">Comprehensive Care</span>
-          <h2 className="font-heading text-3xl sm:text-5xl font-extrabold text-white">
-            UNMATCHED AUTOMOTIVE SERVICES
+        <InteractiveCarShowcase
+          title="CAR WASH"
+          eyebrow="PRECISION CARE FOR EVERY JOURNEY"
+          description="A cleaner car. A better drive. High-pressure snow foam baths, interior steam extraction, hand microfiber dry, and 9H hydrophobic ceramic paint coating."
+          image="/car_wash_3d.jpg"
+          buttonText="BOOK A WASH"
+          buttonLink="/services"
+          variant="wash"
+        />
+      </section>
+
+
+      {/* ==================================================================== */}
+      {/* 3. SECTION B — CAR RENTAL INTERACTIVE SHOWCASE */}
+      {/* ==================================================================== */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <InteractiveCarShowcase
+          title="CAR RENTAL"
+          eyebrow="YOUR NEXT JOURNEY STARTS HERE"
+          description="Choose your drive. Exotic supercars, luxury SUVs, and high-performance electric GTs. Flexible daily and hourly flex rentals with doorstep delivery."
+          image="/car_rental_3d.jpg"
+          buttonText="EXPLORE CARS"
+          buttonLink="/cars"
+          variant="rental"
+        />
+      </section>
+
+
+      {/* ==================================================================== */}
+      {/* 4. COMPACT OUR SERVICES STRIP */}
+      {/* ==================================================================== */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="text-xs text-red-600 font-mono uppercase tracking-widest block font-bold">Comprehensive Care</span>
+          <h2 className="font-heading text-3xl sm:text-5xl font-black text-slate-950 uppercase tracking-tight">
+            OUR SERVICES
           </h2>
-          <p className="text-slate-400 text-sm sm:text-base">
-            Whether you need an exotic ride for the weekend or ultra-clean detailing for your personal vehicle, Anti Gravity delivers world-class service.
+          <p className="text-slate-600 text-sm font-normal">
+            Engineered precision for personal vehicles and luxury fleet maintenance.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           
-          {/* RENTAL CARD */}
-          <div className="glass-card p-8 rounded-3xl space-y-6 relative overflow-hidden group">
-            <div className="w-14 h-14 rounded-2xl bg-ag-cyan/10 border border-ag-cyan/40 flex items-center justify-center text-ag-cyan cyan-glow">
-              <CarIcon className="w-8 h-8 stroke-[2.5]" />
+          {/* SERVICE ITEM 01 */}
+          <div className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-xl shadow-slate-200/50 hover:border-red-500/50 transition-all space-y-4 group">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-2xl font-black text-red-600">01</span>
+              <Droplets className="w-6 h-6 text-slate-400 group-hover:text-red-600 transition-colors" />
             </div>
-            <h3 className="font-heading text-2xl font-bold text-white">Car Rental Fleet</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Drive top-tier vehicles including Porsche, AMG, Tesla Plaid, BMW M, and Range Rover. Daily & hourly flex rentals with full insurance coverage.
+            <h3 className="font-heading text-xl font-bold text-slate-950">Exterior Wash</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+              Touchless high-pressure foam pre-rinse, two-bucket microfiber hand wash, and tire shine.
             </p>
-            <ul className="space-y-2 text-xs text-slate-300">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-ag-cyan" />
-                Zero hidden charges & transparent pricing
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-ag-cyan" />
-                Flexible doorstep delivery or airport pickup
-              </li>
-            </ul>
-            <Link
-              to="/cars"
-              className="inline-flex items-center gap-2 text-ag-cyan font-bold text-sm hover:underline pt-2"
-            >
-              Explore Fleet Catalog <ArrowRight className="w-4 h-4" />
+            <Link to="/services" className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:underline pt-2">
+              Inspect Package <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          {/* WASHING CARD */}
-          <div className="glass-card p-8 rounded-3xl space-y-6 relative overflow-hidden group border-ag-gold/30">
-            <div className="w-14 h-14 rounded-2xl bg-ag-gold/10 border border-ag-gold/40 flex items-center justify-center text-ag-gold gold-glow">
-              <Sparkles className="w-8 h-8 stroke-[2.5]" />
+          {/* SERVICE ITEM 02 */}
+          <div className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-xl shadow-slate-200/50 hover:border-red-500/50 transition-all space-y-4 group">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-2xl font-black text-red-600">02</span>
+              <Sparkles className="w-6 h-6 text-slate-400 group-hover:text-red-600 transition-colors" />
             </div>
-            <h3 className="font-heading text-2xl font-bold text-white">Car Washing & Polish</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Touchless high-pressure foam baths, hand microfiber drying, synthetic wax sealant, and scratch-free wheel decontamination.
+            <h3 className="font-heading text-xl font-bold text-slate-950">Interior Care</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+              Deep steam seat & carpet extraction, leather conditioning, and air vent sanitization.
             </p>
-            <ul className="space-y-2 text-xs text-slate-300">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-ag-gold" />
-                Eco-friendly pH-balanced snow foam
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-ag-gold" />
-                Guaranteed scratch-free microfiber technique
-              </li>
-            </ul>
-            <Link
-              to="/services"
-              className="inline-flex items-center gap-2 text-ag-gold font-bold text-sm hover:underline pt-2"
-            >
-              View Wash Packages <ArrowRight className="w-4 h-4" />
+            <Link to="/services" className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:underline pt-2">
+              Inspect Package <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          {/* DETAILING CARD */}
-          <div className="glass-card p-8 rounded-3xl space-y-6 relative overflow-hidden group">
-            <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/40 flex items-center justify-center text-purple-400">
-              <Layers className="w-8 h-8 stroke-[2.5]" />
+          {/* SERVICE ITEM 03 */}
+          <div className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-xl shadow-slate-200/50 hover:border-red-500/50 transition-all space-y-4 group">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-2xl font-black text-red-600">03</span>
+              <Layers className="w-6 h-6 text-slate-400 group-hover:text-red-600 transition-colors" />
             </div>
-            <h3 className="font-heading text-2xl font-bold text-white">Full Detailing & Ceramic</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Deep steam carpet extraction, leather conditioning, paint correction, engine bay restoration, and 9H hydrophobic ceramic coating.
+            <h3 className="font-heading text-xl font-bold text-slate-950">Full Detailing</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+              Paint swirl correction, engine bay steam restoration, and 9H hydrophobic ceramic coating.
             </p>
-            <ul className="space-y-2 text-xs text-slate-300">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-purple-400" />
-                3-Year Paint Protection Warranty
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-purple-400" />
-                Deep Steam Interior Sanitization
-              </li>
-            </ul>
-            <Link
-              to="/services"
-              className="inline-flex items-center gap-2 text-purple-400 font-bold text-sm hover:underline pt-2"
-            >
-              Learn About Detailing <ArrowRight className="w-4 h-4" />
+            <Link to="/services" className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:underline pt-2">
+              Inspect Package <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {/* SERVICE ITEM 04 */}
+          <div className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-xl shadow-slate-200/50 hover:border-red-500/50 transition-all space-y-4 group">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-2xl font-black text-red-600">04</span>
+              <CarIcon className="w-6 h-6 text-slate-400 group-hover:text-red-600 transition-colors" />
+            </div>
+            <h3 className="font-heading text-xl font-bold text-slate-950">Premium Rental</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+              Hourly and daily flex vehicle rentals featuring Porsche, AMG, Tesla Plaid, and Range Rover.
+            </p>
+            <Link to="/cars" className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:underline pt-2">
+              View catalog <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
@@ -230,33 +293,103 @@ export const Home: React.FC = () => {
 
 
       {/* ==================================================================== */}
-      {/* 3. FEATURED RENTAL CARS */}
+      {/* 5. BRAND VALUES — WHY DISCERNING DRIVERS CHOOSE US */}
       {/* ==================================================================== */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-          <div>
-            <span className="text-xs text-ag-cyan font-bold uppercase tracking-widest block">Available Now</span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-white">
-              FEATURED RENTAL FLEET
+      <section className="relative py-20 bg-slate-100/70 border-y border-slate-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+          <div className="text-center max-w-3xl mx-auto space-y-3">
+            <span className="text-xs text-red-600 font-mono uppercase tracking-widest block font-bold">The Anti Gravity Standard</span>
+            <h2 className="font-heading text-3xl sm:text-5xl font-black text-slate-950 uppercase tracking-tight">
+              ENGINEERED FOR EXCELLENCE
             </h2>
           </div>
-          <Link
-            to="/cars"
-            className="inline-flex items-center gap-2 text-ag-cyan hover:text-white font-bold text-sm transition-colors"
-          >
-            View Entire Fleet ({featuredCars.length}+ Vehicles) <ArrowRight className="w-4 h-4" />
-          </Link>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="flex items-start gap-4 p-6 rounded-3xl bg-white border border-slate-200/90 shadow-lg shadow-slate-200/50">
+              <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-200 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-heading text-lg font-bold text-slate-950">50-Point Safety Inspection</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Every rental car and detailed vehicle undergoes a rigorous multi-point check before key handover.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4 p-6 rounded-3xl bg-white border border-slate-200/90 shadow-lg shadow-slate-200/50">
+              <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-200 flex items-center justify-center shrink-0">
+                <Zap className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-heading text-lg font-bold text-slate-950">Instant Reservation Engine</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Book a car or wash slot in less than 60 seconds with instant booking ID generation and receipts.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4 p-6 rounded-3xl bg-white border border-slate-200/90 shadow-lg shadow-slate-200/50">
+              <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-200 flex items-center justify-center shrink-0">
+                <Award className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-heading text-lg font-bold text-slate-950">Transparent Pricing</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  No hidden fees or surprise insurance surcharges. The price calculated at checkout is exact.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      {/* ==================================================================== */}
+      {/* 6. FEATURED RENTAL FLEET CATALOG (LOCATED LOWER DOWN THE PAGE) */}
+      {/* ==================================================================== */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-2">
+            <span className="text-xs text-red-600 font-mono uppercase tracking-widest block font-bold">Available Now</span>
+            <h2 className="font-heading text-3xl sm:text-5xl font-black text-slate-950 uppercase tracking-tight">
+              EXPLORE OUR FLEET
+            </h2>
+          </div>
+
+          {/* CATEGORY TAGS */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+            {['All', 'Porsche', 'Mercedes-Benz', 'Tesla'].map((tag) => (
+              <button
+                key={tag}
+                onClick={() => setSelectedFilter(tag)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                  selectedFilter === tag
+                    ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                    : 'bg-white text-slate-700 hover:text-slate-950 border border-slate-200/90 shadow-sm'
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
+            <Link
+              to="/cars"
+              className="px-4 py-2 text-xs font-bold text-red-600 hover:underline whitespace-nowrap flex items-center gap-1 ml-2"
+            >
+              All Vehicles ({featuredCars.length}+) <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-96 rounded-2xl bg-ag-surface/50 animate-pulse" />
+              <div key={i} className="h-96 rounded-3xl bg-slate-200/60 animate-pulse" />
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {featuredCars.map((car) => (
+            {filteredCars.map((car) => (
               <CarCard key={car.id} car={car} />
             ))}
           </div>
@@ -265,82 +398,29 @@ export const Home: React.FC = () => {
 
 
       {/* ==================================================================== */}
-      {/* 4. WHY CHOOSE US SECTION */}
-      {/* ==================================================================== */}
-      <section className="relative py-16 bg-ag-card/60 border-y border-ag-border/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-            <span className="text-xs text-ag-gold font-bold uppercase tracking-widest block">The Anti Gravity Standard</span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-white">
-              WHY DISCERNING DRIVERS CHOOSE US
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            
-            <div className="flex items-start gap-4 p-4 rounded-2xl bg-ag-surface/40 border border-ag-border/50">
-              <div className="w-12 h-12 rounded-xl bg-ag-cyan/10 text-ag-cyan flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-heading text-lg font-bold text-white mb-1">Meticulously Maintained</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Every vehicle undergoes a 50-point safety inspection and full detailing before handing over keys.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 p-4 rounded-2xl bg-ag-surface/40 border border-ag-border/50">
-              <div className="w-12 h-12 rounded-xl bg-ag-gold/10 text-ag-gold flex items-center justify-center shrink-0">
-                <Zap className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-heading text-lg font-bold text-white mb-1">Instant Online Booking</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Book a car or wash slot in less than 60 seconds with instant booking ID generation and instant PDF receipts.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 p-4 rounded-2xl bg-ag-surface/40 border border-ag-border/50">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
-                <Award className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-heading text-lg font-bold text-white mb-1">Transparent Pricing</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  No hidden fees or surprise insurance surcharges. The price calculated at checkout is the price you pay.
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-
-      {/* ==================================================================== */}
-      {/* 5. CALL TO ACTION BANNER */}
+      {/* 7. CALL TO ACTION BANNER */}
       {/* ==================================================================== */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-3xl overflow-hidden p-8 sm:p-14 bg-gradient-to-r from-ag-surface via-ag-card to-ag-dark border border-ag-cyan/30 cyan-glow">
-          <div className="relative z-10 max-w-2xl space-y-6">
-            <h2 className="font-heading text-3xl sm:text-5xl font-black text-white leading-tight">
-              READY TO ELEVATE YOUR DRIVING EXPERIENCE?
+        <div className="relative rounded-[2.5rem] overflow-hidden p-10 sm:p-16 bg-gradient-to-r from-slate-950 via-slate-900 to-zinc-950 text-white shadow-2xl space-y-6">
+          <div className="absolute inset-0 bg-radial-gradient from-red-600/20 to-transparent blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 max-w-2xl space-y-4">
+            <h2 className="font-heading text-4xl sm:text-6xl font-black text-white uppercase tracking-tighter leading-none">
+              READY TO ELEVATE YOUR DRIVE?
             </h2>
-            <p className="text-slate-300 text-sm sm:text-base">
-              Book your dream rental car or reserve a premium detailing slot today. Instant confirmation and instant SMS notification.
+            <p className="text-slate-300 text-sm sm:text-base font-light">
+              Reserve your dream rental car or schedule a high-pressure snow foam detailing appointment online.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Link
                 to="/booking"
-                className="px-8 py-4 rounded-xl bg-ag-cyan text-slate-950 font-black text-base text-center shadow-lg hover:scale-105 transition-all"
+                className="px-8 py-4 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-sm uppercase tracking-wider shadow-xl shadow-red-600/30 hover:scale-105 transition-all text-center"
               >
                 Start Online Booking
               </Link>
               <Link
                 to="/contact"
-                className="px-8 py-4 rounded-xl bg-ag-surface border border-ag-border text-white font-bold text-base text-center hover:bg-ag-border transition-all"
+                className="px-8 py-4 rounded-2xl bg-slate-800 border border-slate-700 text-white font-bold text-sm uppercase tracking-wider hover:bg-slate-700 transition-all text-center"
               >
                 Contact Concierge
               </Link>

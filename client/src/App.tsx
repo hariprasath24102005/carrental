@@ -16,6 +16,7 @@ import { ContactPage } from './pages/public/ContactPage';
 import { TermsPage } from './pages/public/TermsPage';
 import { PrivacyPage } from './pages/public/PrivacyPage';
 
+
 // Admin Pages
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -51,7 +52,6 @@ export const App: React.FC = () => {
           
           <main className="flex-1">
             <Routes>
-              {/* PUBLIC ROUTES */}
               <Route path="/" element={<Home />} />
               <Route path="/cars" element={<CarsPage />} />
               <Route path="/cars/:id" element={<CarDetailPage />} />

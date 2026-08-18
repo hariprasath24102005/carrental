@@ -5,16 +5,21 @@ import { Car, WashService, Booking, BusinessSettings, AdminUser } from '../types
 dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+const supabaseKey = 
+  process.env.SUPABASE_SECRET_KEY || 
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 
+  process.env.SUPABASE_PUBLISHABLE_KEY || 
+  process.env.SUPABASE_ANON_KEY || 
+  '';
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl && 
-  supabaseAnonKey && 
+  supabaseKey && 
   !supabaseUrl.includes('your-supabase-project-id')
 );
 
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseKey)
   : null;
 
 // ====================================================================
@@ -41,7 +46,7 @@ export const memoryStore = {
   adminUsers: [
     {
       id: 'a1111111-1111-1111-1111-111111111111',
-      email: 'hari@antigravity.com',
+      email: '23ec034@drngpit.ac.in',
       // bcrypt hash for Hari@2005
       password_hash: '$2a$10$v9cgbb2T8Hse/PAwO41r9.Bzx9Gt/bA1z42R/m/Oz0nVBp2WvcWA2',
       full_name: 'HARI',
@@ -171,7 +176,7 @@ export const memoryStore = {
 
   washServices: [
     {
-      id: 's1111111-1111-1111-1111-111111111111',
+      id: 'd1111111-1111-1111-1111-111111111111',
       name: 'Express Touchless Wash',
       description: 'Fast eco-friendly exterior foam wash, high-pressure rinse, tire shine, and spot-free air drying.',
       price: 35.00,
@@ -181,7 +186,7 @@ export const memoryStore = {
       is_active: true
     },
     {
-      id: 's2222222-2222-2222-2222-222222222222',
+      id: 'd2222222-2222-2222-2222-222222222222',
       name: 'Anti Gravity Signature Wash & Polish',
       description: 'Hand snow foam bath, wheel & brake dust removal, clay bar paint decontamination, interior vacuuming, micro-fiber hand dry, and synthetic wax sealant.',
       price: 85.00,
@@ -191,7 +196,7 @@ export const memoryStore = {
       is_active: true
     },
     {
-      id: 's3333333-3333-3333-3333-333333333333',
+      id: 'd3333333-3333-3333-3333-333333333333',
       name: 'Deep Interior Spa Detailing',
       description: 'Deep steam extraction for seats & carpet, leather conditioning, dashboard UV protection, door jamb cleaning, air vent sanitation, and odor elimination.',
       price: 140.00,
@@ -201,7 +206,7 @@ export const memoryStore = {
       is_active: true
     },
     {
-      id: 's4444444-4444-4444-4444-444444444444',
+      id: 'd4444444-4444-4444-4444-444444444444',
       name: '9H Nano Ceramic Coating Package',
       description: 'Multi-stage paint correction to remove swirl marks & scratches, followed by professional 9H hydrophobic ceramic coating application for 3-year paint protection.',
       price: 499.00,
@@ -211,7 +216,7 @@ export const memoryStore = {
       is_active: true
     },
     {
-      id: 's5555555-5555-5555-5555-555555555555',
+      id: 'd5555555-5555-5555-5555-555555555555',
       name: 'Engine Bay Detailing & Dressing',
       description: 'Safe steam wash of engine bay compartment, degreasing, hydrophobic sealant, and plastic element restoration.',
       price: 65.00,
@@ -265,7 +270,7 @@ export const memoryStore = {
       additional_notes: 'Please focus on front bumper bug removal.',
       created_at: new Date().toISOString(),
       wash_item: {
-        service_id: 's2222222-2222-2222-2222-222222222222',
+        service_id: 'd2222222-2222-2222-2222-222222222222',
         vehicle_type: 'SUV',
         vehicle_registration: 'NY-SPH-88',
         wash_date: '2026-08-18',

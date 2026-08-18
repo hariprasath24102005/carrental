@@ -8,16 +8,16 @@ export default {
     extend: {
       colors: {
         ag: {
-          dark: "#0B0F17",
-          card: "#121824",
-          surface: "#1A2234",
-          border: "#2A364F",
-          cyan: "#00F0FF",
-          cyanHover: "#00D6E6",
-          gold: "#FFB800",
-          goldHover: "#E6A600",
-          accent: "#38BDF8",
-          muted: "#94A3B8"
+          dark: "#F8FAFC",
+          card: "#FFFFFF",
+          surface: "#F1F5F9",
+          border: "#E2E8F0",
+          cyan: "#EF4444",
+          cyanHover: "#DC2626",
+          gold: "#F59E0B",
+          goldHover: "#D97706",
+          accent: "#EF4444",
+          muted: "#64748B"
         }
       },
       fontFamily: {

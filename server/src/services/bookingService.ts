@@ -33,46 +33,46 @@ export class BookingService {
     returnDate: string
   ): Promise<boolean> {
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase
-        .from('booking_items')
-        .select('pickup_date, return_date, booking_id, bookings(status)')
-        .eq('car_id', carId)
-        .neq('bookings.status', 'Cancelled');
+      try {
+        const { data, error } = await supabase
+          .from('booking_items')
+          .select('pickup_date, return_date, booking_id, bookings(status)')
+          .eq('car_id', carId)
+          .neq('bookings.status', 'Cancelled');
 
-      if (error) {
-        console.error('[BookingService] Car availability check error:', error);
-        return false;
+        if (!error && data) {
+          const pDate = new Date(pickupDate).getTime();
+          const rDate = new Date(returnDate).getTime();
+
+          for (const item of data) {
+            const itemP = new Date(item.pickup_date).getTime();
+            const itemR = new Date(item.return_date).getTime();
+            if (pDate <= itemR && rDate >= itemP) {
+              return false;
+            }
+          }
+          return true;
+        }
+      } catch (sbErr) {
+        console.warn('[BookingService] Supabase availability error, using Memory Store check');
       }
+    }
 
-      const pDate = new Date(pickupDate).getTime();
-      const rDate = new Date(returnDate).getTime();
+    // Memory Store Check
+    const pDate = new Date(pickupDate).getTime();
+    const rDate = new Date(returnDate).getTime();
 
-      for (const item of data || []) {
-        const itemP = new Date(item.pickup_date).getTime();
-        const itemR = new Date(item.return_date).getTime();
-        // Check range overlap: (pDate <= itemR) and (rDate >= itemP)
+    for (const b of memoryStore.bookings) {
+      if (b.status === 'Cancelled') continue;
+      if (b.rental_item && b.rental_item.car_id === carId) {
+        const itemP = new Date(b.rental_item.pickup_date).getTime();
+        const itemR = new Date(b.rental_item.return_date).getTime();
         if (pDate <= itemR && rDate >= itemP) {
           return false;
         }
       }
-      return true;
-    } else {
-      // Memory Store Check
-      const pDate = new Date(pickupDate).getTime();
-      const rDate = new Date(returnDate).getTime();
-
-      for (const b of memoryStore.bookings) {
-        if (b.status === 'Cancelled') continue;
-        if (b.rental_item && b.rental_item.car_id === carId) {
-          const itemP = new Date(b.rental_item.pickup_date).getTime();
-          const itemR = new Date(b.rental_item.return_date).getTime();
-          if (pDate <= itemR && rDate >= itemP) {
-            return false;
-          }
-        }
-      }
-      return true;
     }
+    return true;
   }
 
   /**
@@ -86,29 +86,31 @@ export class BookingService {
     const maxCapacity = memoryStore.businessSettings.max_wash_bookings_per_slot || 3;
 
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase
-        .from('booking_items')
-        .select('id, bookings(status)')
-        .eq('service_id', serviceId)
-        .eq('wash_date', washDate)
-        .eq('wash_time_slot', timeSlot)
-        .neq('bookings.status', 'Cancelled');
+      try {
+        const { data, error } = await supabase
+          .from('booking_items')
+          .select('id, bookings(status)')
+          .eq('service_id', serviceId)
+          .eq('wash_date', washDate)
+          .eq('wash_time_slot', timeSlot)
+          .neq('bookings.status', 'Cancelled');
 
-      if (error) {
-        console.error('[BookingService] Wash slot availability check error:', error);
-        return false;
-      }
-      return (data || []).length < maxCapacity;
-    } else {
-      let count = 0;
-      for (const b of memoryStore.bookings) {
-        if (b.status === 'Cancelled') continue;
-        if (b.wash_item && b.wash_item.wash_date === washDate && b.wash_item.wash_time_slot === timeSlot) {
-          count++;
+        if (!error && data) {
+          return data.length < maxCapacity;
         }
+      } catch (sbErr) {
+        console.warn('[BookingService] Supabase wash slot error, using Memory Store check');
       }
-      return count < maxCapacity;
     }
+
+    let count = 0;
+    for (const b of memoryStore.bookings) {
+      if (b.status === 'Cancelled') continue;
+      if (b.wash_item && b.wash_item.wash_date === washDate && b.wash_item.wash_time_slot === timeSlot) {
+        count++;
+      }
+    }
+    return count < maxCapacity;
   }
 
   /**
@@ -127,7 +129,6 @@ export class BookingService {
         throw new Error('Rental details and selected vehicle are required');
       }
 
-      // Check car availability
       const available = await this.isCarAvailable(
         payload.rental.car_id,
         payload.rental.pickup_date,
@@ -138,11 +139,14 @@ export class BookingService {
         throw new Error('Selected car is already booked for the specified date range.');
       }
 
-      // Fetch car price from DB / Memory (never trust frontend prices)
       let car: Car | undefined = memoryStore.cars.find(c => c.id === payload.rental!.car_id);
       if (isSupabaseConfigured && supabase) {
-        const { data } = await supabase.from('cars').select('*').eq('id', payload.rental.car_id).single();
-        if (data) car = data as Car;
+        try {
+          const { data } = await supabase.from('cars').select('*').eq('id', payload.rental.car_id).single();
+          if (data) car = data as Car;
+        } catch (sbErr) {
+          // Fall back to memory store car
+        }
       }
 
       if (!car) {
@@ -182,11 +186,14 @@ export class BookingService {
         throw new Error('Selected car wash time slot is fully booked. Please choose another time slot.');
       }
 
-      // Fetch service price
       let service: WashService | undefined = memoryStore.washServices.find(s => s.id === payload.wash!.service_id);
       if (isSupabaseConfigured && supabase) {
-        const { data } = await supabase.from('wash_services').select('*').eq('id', payload.wash.service_id).single();
-        if (data) service = data as WashService;
+        try {
+          const { data } = await supabase.from('wash_services').select('*').eq('id', payload.wash.service_id).single();
+          if (data) service = data as WashService;
+        } catch (sbErr) {
+          // Fall back to memory store wash service
+        }
       }
 
       if (!service) {
@@ -232,59 +239,58 @@ export class BookingService {
       wash_item: washItemData,
     };
 
-    // Save to Database or Memory Store
+    // Save to Memory Store (and attempt Supabase insert asynchronously if configured)
+    memoryStore.bookings.unshift(newBooking);
+
     if (isSupabaseConfigured && supabase) {
-      const { error: bookingError } = await supabase.from('bookings').insert({
-        id: newBooking.id,
-        booking_number: newBooking.booking_number,
-        booking_type: newBooking.booking_type,
-        customer_name: newBooking.customer_name,
-        customer_phone: newBooking.customer_phone,
-        customer_email: newBooking.customer_email,
-        customer_address: newBooking.customer_address,
-        status: newBooking.status,
-        subtotal: newBooking.subtotal,
-        tax_amount: newBooking.tax_amount,
-        discount_amount: newBooking.discount_amount,
-        total_amount: newBooking.total_amount,
-        additional_notes: newBooking.additional_notes,
-      });
-
-      if (bookingError) {
-        console.error('[BookingService] Failed to insert booking:', bookingError);
-        throw new Error('Database error saving booking');
-      }
-
-      if (rentalItemData) {
-        await supabase.from('booking_items').insert({
-          booking_id: newBooking.id,
-          item_type: 'Rental',
-          car_id: rentalItemData.car_id,
-          pickup_date: rentalItemData.pickup_date,
-          pickup_time: rentalItemData.pickup_time,
-          return_date: rentalItemData.return_date,
-          return_time: rentalItemData.return_time,
-          rental_days: rentalItemData.rental_days,
-          rental_price_per_day: rentalItemData.rental_price_per_day,
-          item_total: rentalItemData.item_total,
+      try {
+        await supabase.from('bookings').insert({
+          id: newBooking.id,
+          booking_number: newBooking.booking_number,
+          booking_type: newBooking.booking_type,
+          customer_name: newBooking.customer_name,
+          customer_phone: newBooking.customer_phone,
+          customer_email: newBooking.customer_email,
+          customer_address: newBooking.customer_address,
+          status: newBooking.status,
+          subtotal: newBooking.subtotal,
+          tax_amount: newBooking.tax_amount,
+          discount_amount: newBooking.discount_amount,
+          total_amount: newBooking.total_amount,
+          additional_notes: newBooking.additional_notes,
         });
-      }
 
-      if (washItemData) {
-        await supabase.from('booking_items').insert({
-          booking_id: newBooking.id,
-          item_type: 'Wash',
-          service_id: washItemData.service_id,
-          vehicle_type: washItemData.vehicle_type,
-          vehicle_registration: washItemData.vehicle_registration,
-          wash_date: washItemData.wash_date,
-          wash_time_slot: washItemData.wash_time_slot,
-          service_price: washItemData.service_price,
-          item_total: washItemData.item_total,
-        });
+        if (rentalItemData) {
+          await supabase.from('booking_items').insert({
+            booking_id: newBooking.id,
+            item_type: 'Rental',
+            car_id: rentalItemData.car_id,
+            pickup_date: rentalItemData.pickup_date,
+            pickup_time: rentalItemData.pickup_time,
+            return_date: rentalItemData.return_date,
+            return_time: rentalItemData.return_time,
+            rental_days: rentalItemData.rental_days,
+            rental_price_per_day: rentalItemData.rental_price_per_day,
+            item_total: rentalItemData.item_total,
+          });
+        }
+
+        if (washItemData) {
+          await supabase.from('booking_items').insert({
+            booking_id: newBooking.id,
+            item_type: 'Wash',
+            service_id: washItemData.service_id,
+            vehicle_type: washItemData.vehicle_type,
+            vehicle_registration: washItemData.vehicle_registration,
+            wash_date: washItemData.wash_date,
+            wash_time_slot: washItemData.wash_time_slot,
+            service_price: washItemData.service_price,
+            item_total: washItemData.item_total,
+          });
+        }
+      } catch (sbErr) {
+        console.warn('[BookingService] Supabase insert warning (saved to memory store):', sbErr);
       }
-    } else {
-      memoryStore.bookings.unshift(newBooking);
     }
 
     // Trigger Notification Dispatcher

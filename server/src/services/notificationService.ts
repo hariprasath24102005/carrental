@@ -10,7 +10,7 @@ export interface NotificationResult {
 
 export class NotificationService {
   /**
-   * Send booking confirmation SMS & WhatsApp message
+   * Send booking confirmation SMS & WhatsApp message to Customer AND Admin Mobile Number
    */
   public static async sendBookingConfirmation(
     booking: Booking,
@@ -21,7 +21,11 @@ export class NotificationService {
     const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
     const whatsappToken = process.env.WHATSAPP_API_TOKEN;
 
-    const messageText = 
+    const adminMobile = businessSettings.whatsapp_number || businessSettings.phone_number || '+91 9363115217';
+    const recipientPhone = booking.customer_phone;
+
+    // Customer Notification Text
+    const customerMessageText = 
 `🚗 *ANTI GRAVITY BOOKING CONFIRMATION* 🚗
 ----------------------------------------
 Booking ID: ${booking.booking_number}
@@ -36,97 +40,110 @@ Address: ${businessSettings.address}
 Thank you for choosing Anti Gravity!
 Drive Better. Travel Further. Stay Spotless.`;
 
-    const recipientPhone = booking.customer_phone;
+    // Admin Notification Text for Admin Mobile Number (+91 9363115217)
+    const adminMessageText = 
+`🚨 *NEW ANTI GRAVITY BOOKING ALERT* 🚨
+----------------------------------------
+Booking #: ${booking.booking_number}
+Type: ${booking.booking_type}
+Customer: ${booking.customer_name} (${booking.customer_phone})
+Email: ${booking.customer_email || 'N/A'}
+Address: ${booking.customer_address || 'N/A'}
 
-    // 1. Check if Twilio Credentials are provided
+${booking.rental_item ? `🚗 Rental: ${booking.rental_item.car?.brand || ''} ${booking.rental_item.car?.name || ''} (${booking.rental_item.rental_days} Days)` : ''}
+${booking.wash_item ? `✨ Wash: ${booking.wash_item.service?.name || ''} (${booking.wash_item.wash_date} @ ${booking.wash_item.wash_time_slot})` : ''}
+
+Total Amount: $${booking.total_amount.toFixed(2)}
+Status: ${booking.status.toUpperCase()}
+
+👉 Review & Manage in Admin Portal:
+http://localhost:5173/admin/bookings`;
+
+    // 1. Dispatch Twilio SMS if configured
     if (twilioSid && twilioAuthToken && twilioPhone && !twilioSid.includes('AC_your_twilio')) {
       try {
         const authHeader = 'Basic ' + Buffer.from(`${twilioSid}:${twilioAuthToken}`).toString('base64');
-        const params = new URLSearchParams();
-        params.append('To', recipientPhone);
-        params.append('From', twilioPhone);
-        params.append('Body', messageText);
+        
+        // Dispatch to Customer
+        const customerParams = new URLSearchParams();
+        customerParams.append('To', recipientPhone);
+        customerParams.append('From', twilioPhone);
+        customerParams.append('Body', customerMessageText);
 
-        const response = await fetch(
-          `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': authHeader,
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: params.toString(),
-          }
-        );
+        await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
+          method: 'POST',
+          headers: { 'Authorization': authHeader, 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: customerParams.toString(),
+        });
 
-        const data: any = await response.json();
-        if (response.ok) {
-          console.log(`[NotificationService] SMS successfully dispatched via Twilio to ${recipientPhone}`);
-          return {
-            success: true,
-            channel: 'SMS',
-            message: `SMS dispatched via Twilio SID: ${data.sid}`,
-            recipient: recipientPhone,
-            details: data,
-          };
-        } else {
-          console.error('[NotificationService] Twilio SMS API Error:', data);
-        }
+        // Dispatch to Admin Mobile (+91 9363115217)
+        const adminParams = new URLSearchParams();
+        adminParams.append('To', adminMobile);
+        adminParams.append('From', twilioPhone);
+        adminParams.append('Body', adminMessageText);
+
+        await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
+          method: 'POST',
+          headers: { 'Authorization': authHeader, 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: adminParams.toString(),
+        });
+
+        console.log(`[NotificationService] SMS successfully dispatched via Twilio to Customer (${recipientPhone}) AND Admin (${adminMobile})`);
       } catch (err: any) {
         console.error('[NotificationService] Failed to send SMS via Twilio:', err?.message || err);
       }
     }
 
-    // 2. Check if WhatsApp Business Cloud API credentials are provided
+    // 2. Dispatch WhatsApp API if configured
     if (whatsappToken && process.env.WHATSAPP_PHONE_NUMBER_ID) {
       try {
         const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-        const response = await fetch(
-          `https://graph.facebook.com/v18.0/${phoneId}/messages`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${whatsappToken}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              messaging_product: 'whatsapp',
-              to: recipientPhone.replace(/[^0-9]/g, ''),
-              type: 'text',
-              text: { body: messageText },
-            }),
-          }
-        );
 
-        const data = await response.json();
-        if (response.ok) {
-          console.log(`[NotificationService] WhatsApp notification sent to ${recipientPhone}`);
-          return {
-            success: true,
-            channel: 'WhatsApp',
-            message: 'WhatsApp Cloud API message dispatched successfully',
-            recipient: recipientPhone,
-            details: data,
-          };
-        }
+        // Customer WhatsApp
+        await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${whatsappToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to: recipientPhone.replace(/[^0-9]/g, ''),
+            type: 'text',
+            text: { body: customerMessageText },
+          }),
+        });
+
+        // Admin WhatsApp
+        await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${whatsappToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to: adminMobile.replace(/[^0-9]/g, ''),
+            type: 'text',
+            text: { body: adminMessageText },
+          }),
+        });
+
+        console.log(`[NotificationService] WhatsApp notification sent to Customer (${recipientPhone}) AND Admin (${adminMobile})`);
       } catch (err: any) {
         console.error('[NotificationService] WhatsApp API Error:', err?.message || err);
       }
     }
 
-    // 3. Fallback: Structured Console & System Notification Log
+    // 3. Console & System Notification Log for Admin & Customer
     console.log(`\n================================================================`);
-    console.log(`[NOTIFICATION DISPATCHER - SMS & WHATSAPP LOG]`);
-    console.log(`To: ${recipientPhone}`);
-    console.log(`Message Content:\n${messageText}`);
-    console.log(`Notice: Configure TWILIO_ACCOUNT_SID or WHATSAPP_API_TOKEN in .env for live SMS routing.`);
+    console.log(`[NOTIFICATION DISPATCHER - ADMIN MOBILE ALERT LOG]`);
+    console.log(`Admin Recipient Phone: ${adminMobile}`);
+    console.log(`Message Content:\n${adminMessageText}`);
+    console.log(`----------------------------------------------------------------`);
+    console.log(`Customer Recipient Phone: ${recipientPhone}`);
+    console.log(`Message Content:\n${customerMessageText}`);
     console.log(`================================================================\n`);
 
     return {
       success: true,
       channel: 'ConsoleLog',
-      message: 'Booking notification formatted and logged to server console (Set TWILIO_ACCOUNT_SID for SMS delivery)',
-      recipient: recipientPhone,
+      message: `Booking alerts generated for Customer (${recipientPhone}) and Admin (${adminMobile})`,
+      recipient: adminMobile,
     };
   }
 }

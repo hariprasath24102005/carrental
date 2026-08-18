@@ -45,7 +45,7 @@ export const AdminSettings: React.FC = () => {
 
   return (
     <div className="pt-28 pb-20 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-      
+
       {/* HEADER */}
       <div>
         <span className="text-xs text-ag-cyan font-bold uppercase tracking-widest block">System Configuration</span>
@@ -61,7 +61,7 @@ export const AdminSettings: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="glass-panel p-8 rounded-3xl space-y-6 border border-ag-border/80 text-xs">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
+
           <div className="space-y-1.5">
             <label className="text-slate-300 font-semibold block">Business Name *</label>
             <input

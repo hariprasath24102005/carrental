@@ -37,27 +37,27 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
 
         {/* CONTENT */}
         <div className="p-6 space-y-3">
-          <h3 className="font-heading text-xl font-bold text-white group-hover:text-ag-cyan transition-colors">
+          <h3 className="font-heading text-xl font-bold text-slate-900 group-hover:text-ag-cyan transition-colors">
             {service.name}
           </h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-slate-600 leading-relaxed font-medium">
             {service.description}
           </p>
         </div>
       </div>
 
       {/* FOOTER */}
-      <div className="p-6 pt-0 border-t border-ag-border/40 mt-4 flex items-center justify-between">
+      <div className="p-6 pt-0 border-t border-slate-200 mt-4 flex items-center justify-between">
         <div>
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Service Price</span>
+          <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-semibold">Service Price</span>
           <div className="flex items-baseline gap-1">
-            <span className="font-heading text-2xl font-black text-white">${service.price}</span>
+            <span className="font-heading text-2xl font-black text-slate-900">${service.price}</span>
           </div>
         </div>
 
         <Link
           to={`/booking?type=wash&service_id=${service.id}`}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-ag-cyan to-blue-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md hover:scale-105 transition-transform"
+          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-ag-cyan to-red-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-md hover:scale-105 transition-transform"
         >
           Book Service
           <ArrowRight className="w-3.5 h-3.5" />

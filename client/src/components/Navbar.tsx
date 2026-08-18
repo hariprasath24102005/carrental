@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Car, Sparkles, ShieldCheck, Menu, X, UserCheck, Calendar } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Car, Menu, X, UserCheck, Calendar, Shield, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
@@ -16,7 +15,7 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks = [
+  const navLinks: { name: string; path: string }[] = [
     { name: 'Home', path: '/' },
     { name: 'Rental Fleet', path: '/cars' },
     { name: 'Car Wash Services', path: '/services' },
@@ -33,59 +32,73 @@ export const Navbar: React.FC = () => {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-ag-dark/90 backdrop-blur-md border-b border-ag-border/80 py-3 shadow-2xl'
-          : 'bg-gradient-to-b from-ag-dark/95 to-transparent py-5'
+          ? 'bg-white/95 backdrop-blur-md border-b border-slate-200/90 py-3 shadow-lg shadow-slate-200/50'
+          : 'bg-white/80 backdrop-blur-sm border-b border-slate-200/50 py-4'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           
-          {/* BRAND LOGO */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ag-cyan to-blue-600 flex items-center justify-center cyan-glow transition-transform duration-300 group-hover:scale-105">
-              <Car className="w-6 h-6 text-slate-950 stroke-[2.5]" />
+          {/* TOP-LEFT COMPANY LOGO BADGE */}
+          <Link to="/" className="flex items-center gap-3.5 group">
+            {/* Metallic Shield Emblem Logo */}
+            <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-slate-950 via-slate-900 to-red-600 p-0.5 shadow-md shadow-red-600/20 transition-transform duration-300 group-hover:scale-105">
+              <div className="w-full h-full rounded-[14px] bg-slate-950 flex items-center justify-center relative overflow-hidden">
+                <Shield className="w-6 h-6 text-red-500 stroke-[2] absolute" />
+                <Car className="w-5 h-5 text-white stroke-[2.5] z-10 transform group-hover:translate-x-0.5 transition-transform" />
+                <div className="absolute top-0 right-0 w-4 h-4 bg-red-500/20 rounded-full blur-sm" />
+              </div>
             </div>
-            <div>
-              <span className="font-heading text-xl font-black tracking-wider text-white uppercase block leading-none">
-                ANTI<span className="text-ag-cyan">GRAVITY</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium tracking-widest block uppercase mt-0.5">
-                Rental & Detailing
+
+            {/* Typography Brand Name */}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5 leading-none">
+                <span className="font-heading text-xl font-black tracking-tighter text-slate-950 uppercase">
+                  ANTI<span className="text-red-600">GRAVITY</span>
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+              </div>
+              <span className="text-[10px] font-mono text-slate-500 tracking-widest block uppercase font-bold mt-1">
+                AUTOMOTIVE • RENTAL & WASH
               </span>
             </div>
           </Link>
 
-          {/* DESKTOP NAV LINKS */}
-          <div className="hidden md:flex items-center gap-1 bg-ag-card/60 border border-ag-border/50 rounded-full px-4 py-1.5 backdrop-blur-sm">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  isActive(link.path)
-                    ? 'bg-ag-cyan text-slate-950 font-semibold shadow-md'
-                    : 'text-slate-300 hover:text-white hover:bg-ag-surface/50'
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
+          {/* DESKTOP NAV LINKS (NEW SLEEK PILL STYLE) */}
+          <div className="hidden md:flex items-center gap-1 bg-slate-100/90 border border-slate-200/90 rounded-full p-1.5 shadow-inner">
+            {navLinks.map((link) => {
+              const active = isActive(link.path);
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`relative px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 flex items-center gap-1.5 uppercase tracking-wider ${
+                    active
+                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/20'
+                      : 'text-slate-700 hover:text-red-600 hover:bg-white/80'
+                  }`}
+                >
+                  {active && <Sparkles className="w-3 h-3 text-red-500 animate-spin" style={{ animationDuration: '6s' }} />}
+                  <span>{link.name}</span>
+                </Link>
+              );
+            })}
           </div>
 
-          {/* ACTION BUTTONS */}
+          {/* RIGHT ACTION BUTTONS */}
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
                 <Link
                   to="/admin"
-                  className="flex items-center gap-2 bg-ag-surface hover:bg-ag-border border border-ag-cyan/40 text-ag-cyan px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                  className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-900 px-4 py-2 rounded-xl text-xs font-bold transition-all"
                 >
-                  <UserCheck className="w-4 h-4" />
+                  <UserCheck className="w-4 h-4 text-red-600" />
                   Admin Dashboard
                 </Link>
                 <button
                   onClick={() => logout()}
-                  className="text-xs text-slate-400 hover:text-red-400 px-2 py-1"
+                  className="text-xs text-slate-500 hover:text-red-600 px-2 py-1 font-semibold"
                 >
                   Logout
                 </button>
@@ -93,7 +106,7 @@ export const Navbar: React.FC = () => {
             ) : (
               <Link
                 to="/admin/login"
-                className="text-slate-400 hover:text-white text-xs font-medium px-3 py-2 transition-colors"
+                className="text-slate-600 hover:text-slate-950 text-xs font-bold px-3 py-2 transition-colors uppercase tracking-wider"
               >
                 Admin Login
               </Link>
@@ -101,7 +114,7 @@ export const Navbar: React.FC = () => {
 
             <Link
               to="/booking"
-              className="flex items-center gap-2 bg-gradient-to-r from-ag-cyan to-blue-500 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-sm cyan-glow hover:opacity-90 hover:scale-[1.02] transition-all"
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-black px-5 py-2.5 rounded-xl text-xs shadow-md shadow-red-600/25 hover:scale-[1.03] transition-all uppercase tracking-widest"
             >
               <Calendar className="w-4 h-4" />
               Book Now
@@ -112,47 +125,47 @@ export const Navbar: React.FC = () => {
           <div className="md:hidden flex items-center gap-2">
             <Link
               to="/booking"
-              className="bg-ag-cyan text-slate-950 p-2 rounded-lg font-bold text-xs flex items-center gap-1"
+              className="bg-red-600 text-white p-2.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow-md"
             >
               <Calendar className="w-4 h-4" />
               Book
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg bg-ag-surface text-slate-300 hover:text-white border border-ag-border"
+              className="p-2.5 rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200"
               aria-label="Toggle menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
 
         </div>
       </div>
 
-      {/* MOBILE DRAWER */}
+      {/* MOBILE MENU DRAWER */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-ag-dark/98 border-b border-ag-border px-4 pt-4 pb-6 space-y-3 mt-3 backdrop-blur-xl animate-in slide-in-from-top duration-200">
+        <div className="md:hidden bg-white/98 border-b border-slate-200 px-4 pt-4 pb-6 space-y-3 mt-3 shadow-2xl backdrop-blur-xl">
           {navLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-4 py-3 rounded-xl font-medium ${
+              className={`flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm ${
                 isActive(link.path)
-                  ? 'bg-ag-cyan text-slate-950 font-bold'
-                  : 'text-slate-200 hover:bg-ag-surface'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-800 hover:bg-slate-100'
               }`}
             >
-              {link.name}
+              <span>{link.name}</span>
             </Link>
           ))}
 
-          <div className="pt-3 border-t border-ag-border/60 flex flex-col gap-2">
+          <div className="pt-3 border-t border-slate-200 flex flex-col gap-2">
             {isAuthenticated ? (
               <Link
                 to="/admin"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center bg-ag-surface text-ag-cyan font-semibold py-3 rounded-xl border border-ag-cyan/40"
+                className="w-full text-center bg-slate-100 text-slate-900 font-bold py-3 rounded-xl border border-slate-300 text-xs"
               >
                 Admin Dashboard
               </Link>
@@ -160,7 +173,7 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/admin/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center text-slate-300 py-2 text-sm"
+                className="w-full text-center text-slate-700 py-2 text-xs font-bold uppercase tracking-wider"
               >
                 Admin Login
               </Link>
