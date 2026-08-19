@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { Car, WashService, BookingType, CreateBookingPayload } from '../../types';
@@ -11,7 +11,13 @@ import {
   ArrowRight,
   Plus,
   Minus,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Check,
+  ChevronDown,
+  Fuel,
+  Users,
+  Clock,
+  ShieldCheck
 } from 'lucide-react';
 
 export const BookingPage: React.FC = () => {
@@ -47,6 +53,12 @@ export const BookingPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Dropdown Open States
+  const [isCarDropdownOpen, setIsCarDropdownOpen] = useState(false);
+  const [isWashDropdownOpen, setIsWashDropdownOpen] = useState(false);
+  const carDropdownRef = useRef<HTMLDivElement>(null);
+  const washDropdownRef = useRef<HTMLDivElement>(null);
+
   // Selected Rental Details
   const [selectedCarId, setSelectedCarId] = useState(searchParams.get('car_id') || '');
   const [rentalDays, setRentalDays] = useState(2);
@@ -74,6 +86,20 @@ export const BookingPage: React.FC = () => {
     '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
   ];
 
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (carDropdownRef.current && !carDropdownRef.current.contains(event.target as Node)) {
+        setIsCarDropdownOpen(false);
+      }
+      if (washDropdownRef.current && !washDropdownRef.current.contains(event.target as Node)) {
+        setIsWashDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Event Handlers for Live Date & Days Sync
   const handlePickupDateChange = (newDate: string) => {
     setPickupDate(newDate);
@@ -97,25 +123,31 @@ export const BookingPage: React.FC = () => {
   useEffect(() => {
     Promise.all([api.getCars(), api.getWashServices()])
       .then(([carsData, servicesData]) => {
-        const availableCars = carsData.filter(c => c.status === 'Available');
-        const activeServices = servicesData.filter(s => s.is_active !== false);
+        const rawCars = carsData || [];
+        const rawServices = servicesData || [];
 
-        setCars(availableCars.length > 0 ? availableCars : carsData);
-        setWashServices(activeServices.length > 0 ? activeServices : servicesData);
+        const availableCars = rawCars.filter(c => c.status === 'Available');
+        const activeServices = rawServices.filter(s => s.is_active !== false);
+
+        const usableCars = availableCars.length > 0 ? availableCars : rawCars;
+        const usableServices = activeServices.length > 0 ? activeServices : rawServices;
+
+        setCars(usableCars);
+        setWashServices(usableServices);
 
         const paramCarId = searchParams.get('car_id');
         const paramServiceId = searchParams.get('service_id');
 
-        if (paramCarId && carsData.some(c => String(c.id) === String(paramCarId))) {
+        if (paramCarId && usableCars.some(c => String(c.id) === String(paramCarId))) {
           setSelectedCarId(paramCarId);
-        } else if (carsData.length > 0 && !selectedCarId) {
-          setSelectedCarId(carsData[0].id);
+        } else if (usableCars.length > 0) {
+          setSelectedCarId(prev => (prev && usableCars.some(c => String(c.id) === String(prev)) ? prev : usableCars[0].id));
         }
 
-        if (paramServiceId && servicesData.some(s => String(s.id) === String(paramServiceId))) {
+        if (paramServiceId && usableServices.some(s => String(s.id) === String(paramServiceId))) {
           setSelectedServiceId(paramServiceId);
-        } else if (servicesData.length > 0 && !selectedServiceId) {
-          setSelectedServiceId(servicesData[0].id);
+        } else if (usableServices.length > 0) {
+          setSelectedServiceId(prev => (prev && usableServices.some(s => String(s.id) === String(prev)) ? prev : usableServices[0].id));
         }
       })
       .catch(console.error)
@@ -123,8 +155,8 @@ export const BookingPage: React.FC = () => {
   }, [searchParams]);
 
   // Calculate Price Breakdown
-  const selectedCar = cars.find(c => String(c.id) === String(selectedCarId));
-  const selectedService = washServices.find(s => String(s.id) === String(selectedServiceId));
+  const selectedCar = cars.find(c => String(c.id) === String(selectedCarId)) || (cars.length > 0 ? cars[0] : undefined);
+  const selectedService = washServices.find(s => String(s.id) === String(selectedServiceId)) || (washServices.length > 0 ? washServices[0] : undefined);
 
   let subtotal = 0;
 
@@ -162,8 +194,9 @@ export const BookingPage: React.FC = () => {
       };
 
       if (bookingType === 'Rental' || bookingType === 'Both') {
+        const carIdToUse = selectedCarId || (selectedCar?.id || (cars.length > 0 ? cars[0].id : ''));
         payload.rental = {
-          car_id: selectedCarId || (cars.length > 0 ? cars[0].id : ''),
+          car_id: carIdToUse,
           pickup_date: pickupDate,
           pickup_time: pickupTime,
           return_date: returnDate,
@@ -172,8 +205,9 @@ export const BookingPage: React.FC = () => {
       }
 
       if (bookingType === 'Wash' || bookingType === 'Both') {
+        const serviceIdToUse = selectedServiceId || (selectedService?.id || (washServices.length > 0 ? washServices[0].id : ''));
         payload.wash = {
-          service_id: selectedServiceId || (washServices.length > 0 ? washServices[0].id : ''),
+          service_id: serviceIdToUse,
           vehicle_type: vehicleType,
           vehicle_registration: vehicleReg,
           wash_date: washDate,
@@ -188,6 +222,15 @@ export const BookingPage: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const getCarImage = (car?: Car) => {
+    if (!car) return 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=800&q=80';
+    return (
+      car.images?.find(img => img.is_primary)?.image_url ||
+      car.images?.[0]?.image_url ||
+      'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=800&q=80'
+    );
   };
 
   if (loadingData) {
@@ -280,21 +323,171 @@ export const BookingPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
-              {/* VEHICLE PICKER */}
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold text-slate-700">Select Vehicle</label>
+              {/* VEHICLE PICKER (INTERACTIVE CUSTOM DROPDOWN + CARDS) */}
+              <div className="space-y-3 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Select Vehicle Fleet ({cars.length} available)
+                  </label>
+                  {selectedCar && (
+                    <span className="text-xs font-bold text-red-600">
+                      ${selectedCar.price_per_day}/day
+                    </span>
+                  )}
+                </div>
+
+                {/* Custom Interactive Dropdown Button */}
+                <div className="relative" ref={carDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsCarDropdownOpen(!isCarDropdownOpen)}
+                    className="w-full bg-slate-50 hover:bg-slate-100/80 border-2 border-slate-200 focus:border-red-500 rounded-2xl p-3.5 text-left flex items-center justify-between transition-all shadow-sm"
+                  >
+                    {selectedCar ? (
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={getCarImage(selectedCar)}
+                          alt={selectedCar.name}
+                          className="w-14 h-10 object-cover rounded-xl border border-slate-200 shrink-0"
+                        />
+                        <div>
+                          <div className="text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span>{selectedCar.brand} {selectedCar.name}</span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                              {selectedCar.year}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 font-medium flex items-center gap-2">
+                            <span>{selectedCar.fuel_type}</span>
+                            <span>•</span>
+                            <span>{selectedCar.transmission}</span>
+                            <span>•</span>
+                            <span className="font-bold text-red-600">${selectedCar.price_per_day}/day</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-slate-500 font-medium">Select a vehicle...</span>
+                    )}
+                    <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isCarDropdownOpen ? 'rotate-180 text-red-600' : ''}`} />
+                  </button>
+
+                  {/* Dropdown Menu Popup */}
+                  {isCarDropdownOpen && (
+                    <div className="absolute z-30 mt-2 w-full bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden max-h-80 overflow-y-auto">
+                      <div className="p-2 space-y-1">
+                        {cars.map((car) => {
+                          const isSelected = String(car.id) === String(selectedCarId);
+                          return (
+                            <div
+                              key={car.id}
+                              onClick={() => {
+                                setSelectedCarId(car.id);
+                                setIsCarDropdownOpen(false);
+                              }}
+                              className={`p-3 rounded-xl flex items-center justify-between cursor-pointer transition-all ${
+                                isSelected
+                                  ? 'bg-red-50/80 border border-red-200'
+                                  : 'hover:bg-slate-50 border border-transparent'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={getCarImage(car)}
+                                  alt={car.name}
+                                  className="w-14 h-10 object-cover rounded-lg border border-slate-200 shrink-0"
+                                />
+                                <div>
+                                  <div className="text-xs sm:text-sm font-bold text-slate-900">
+                                    {car.brand} {car.name}
+                                  </div>
+                                  <div className="text-[11px] text-slate-500 font-medium flex items-center gap-2">
+                                    <span>{car.fuel_type}</span>
+                                    <span>•</span>
+                                    <span>{car.transmission}</span>
+                                    <span>•</span>
+                                    <span>{car.seating_capacity} Seats</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right flex items-center gap-3">
+                                <div>
+                                  <div className="font-heading font-black text-sm text-red-600">
+                                    ${car.price_per_day}
+                                  </div>
+                                  <div className="text-[10px] text-slate-400 font-semibold uppercase">per day</div>
+                                </div>
+                                {isSelected && (
+                                  <div className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center">
+                                    <Check className="w-3.5 h-3.5" />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Hidden native select for standard HTML form synchronization */}
                 <select
                   value={selectedCarId}
                   onChange={(e) => setSelectedCarId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 font-semibold focus:outline-none focus:border-red-500 focus:bg-white cursor-pointer shadow-sm"
-                  required
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden="true"
                 >
                   {cars.map((c) => (
-                    <option key={c.id} value={c.id} className="bg-white text-slate-800 font-medium py-2">
-                      {c.brand} {c.name} (${c.price_per_day}/day)
+                    <option key={c.id} value={c.id}>
+                      {c.brand} {c.name}
                     </option>
                   ))}
                 </select>
+
+                {/* Quick Vehicle Select Cards (Grid View) */}
+                <div className="pt-2">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                    Quick Select from Fleet:
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2.5">
+                    {cars.map((car) => {
+                      const isSelected = String(car.id) === String(selectedCarId);
+                      return (
+                        <div
+                          key={car.id}
+                          onClick={() => setSelectedCarId(car.id)}
+                          className={`p-2.5 rounded-2xl border cursor-pointer transition-all text-left flex flex-col justify-between relative group ${
+                            isSelected
+                              ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-red-500'
+                              : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                          }`}
+                        >
+                          {isSelected && (
+                            <span className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase">
+                              Active
+                            </span>
+                          )}
+                          <img
+                            src={getCarImage(car)}
+                            alt={car.name}
+                            className="w-full h-16 object-cover rounded-xl mb-2"
+                          />
+                          <div>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-red-400' : 'text-slate-500'}`}>
+                              {car.brand}
+                            </p>
+                            <h4 className="text-xs font-black truncate">{car.name}</h4>
+                            <p className={`text-xs font-bold mt-1 ${isSelected ? 'text-white' : 'text-red-600'}`}>
+                              ${car.price_per_day}<span className="text-[10px] font-normal opacity-80">/day</span>
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               {/* RENTAL DURATION CONTROL (STEPPER & QUICK PILLS) */}
@@ -408,26 +601,114 @@ export const BookingPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
-              {/* SERVICE PICKER */}
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-semibold text-slate-700">Select Washing / Detailing Package</label>
+              {/* SERVICE PICKER (CUSTOM DROPDOWN + CARDS) */}
+              <div className="space-y-3 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Select Washing / Detailing Package
+                  </label>
+                  {selectedService && (
+                    <span className="text-xs font-bold text-red-600">
+                      ${selectedService.price} • {selectedService.duration_minutes} Mins
+                    </span>
+                  )}
+                </div>
+
+                {/* Custom Interactive Dropdown Button for Wash Services */}
+                <div className="relative" ref={washDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsWashDropdownOpen(!isWashDropdownOpen)}
+                    className="w-full bg-slate-50 hover:bg-slate-100/80 border-2 border-slate-200 focus:border-red-500 rounded-2xl p-3.5 text-left flex items-center justify-between transition-all shadow-sm"
+                  >
+                    {selectedService ? (
+                      <div>
+                        <div className="text-sm font-black text-slate-900 flex items-center gap-2">
+                          <span>{selectedService.name}</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                            {selectedService.category}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-500 font-medium flex items-center gap-2 mt-0.5">
+                          <span>⏱️ {selectedService.duration_minutes} Mins</span>
+                          <span>•</span>
+                          <span className="font-bold text-red-600">${selectedService.price}</span>
+                          <span>•</span>
+                          <span className="truncate max-w-xs">{selectedService.description}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-slate-500 font-medium">Select a washing package...</span>
+                    )}
+                    <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isWashDropdownOpen ? 'rotate-180 text-red-600' : ''}`} />
+                  </button>
+
+                  {/* Dropdown Menu Popup */}
+                  {isWashDropdownOpen && (
+                    <div className="absolute z-30 mt-2 w-full bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden max-h-80 overflow-y-auto">
+                      <div className="p-2 space-y-1">
+                        {washServices.map((service) => {
+                          const isSelected = String(service.id) === String(selectedServiceId);
+                          return (
+                            <div
+                              key={service.id}
+                              onClick={() => {
+                                setSelectedServiceId(service.id);
+                                setIsWashDropdownOpen(false);
+                              }}
+                              className={`p-3 rounded-xl flex items-center justify-between cursor-pointer transition-all ${
+                                isSelected
+                                  ? 'bg-red-50/80 border border-red-200'
+                                  : 'hover:bg-slate-50 border border-transparent'
+                              }`}
+                            >
+                              <div>
+                                <div className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                                  <span>{service.name}</span>
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                                    {service.category}
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+                                  {service.description}
+                                </div>
+                              </div>
+                              <div className="text-right flex items-center gap-3 shrink-0 ml-3">
+                                <div>
+                                  <div className="font-heading font-black text-sm text-red-600">
+                                    ${service.price}
+                                  </div>
+                                  <div className="text-[10px] text-slate-400 font-semibold">
+                                    {service.duration_minutes} mins
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <div className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center">
+                                    <Check className="w-3.5 h-3.5" />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Hidden native select for standard HTML form synchronization */}
                 <select
                   value={selectedServiceId}
                   onChange={(e) => setSelectedServiceId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 font-semibold focus:outline-none focus:border-red-500 focus:bg-white cursor-pointer shadow-sm"
-                  required
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden="true"
                 >
-                  {washServices.length === 0 ? (
-                    <option value="" disabled className="bg-white text-slate-400">
-                      No washing packages available
+                  {washServices.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
                     </option>
-                  ) : (
-                    washServices.map((s) => (
-                      <option key={s.id} value={s.id} className="bg-white text-slate-800 font-medium py-2">
-                        {s.name} — ${s.price} ({s.duration_minutes} Mins)
-                      </option>
-                    ))
-                  )}
+                  ))}
                 </select>
               </div>
 
